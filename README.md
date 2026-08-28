@@ -45,7 +45,7 @@ The store also allows clients to upload their own designs and to customize them 
 1. Clone the repo:
 ```bash
 git clone https://github.com/NicoMeyerDev/Truck-Signs-API-v2
-cd truck-signs-api-main
+cd truck-signs-api
 ```
 
 2. Copy the content of the example.env file into a .env file:
