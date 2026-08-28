@@ -18,6 +18,10 @@ The store also allows clients to upload their own designs and to customize them 
   - [Prerequisites](#prerequisites)
   - [Quickstart](#quickstart)
   - [Usage](#usage)
+    - [Docker](#Docker)
+        - [Build an image](#Build-an-image)
+        - [Docker run](#Docker-run)
+        - [Docker compose](#Docker-compose)
     - [Settings](#settings)
     - [Models](#models)
     - [Brief Explanation of the Views](#brief-explanation-of-the-views)
@@ -40,8 +44,8 @@ The store also allows clients to upload their own designs and to customize them 
 
 1. Clone the repo:
 ```bash
-git clone git@github.com:Developer-Akademie-DevSecOpsKurs/truck-signs-api.git
-cd truck-signs-api
+git clone https://github.com/NicoMeyerDev/Truck-Signs-API-v2
+cd truck-signs-api-main
 ```
 
 2. Copy the content of the example.env file into a .env file:
@@ -82,6 +86,115 @@ python src/manage.py runserver
 
 ## Usage
 
+## Docker
+
+### Build an image
+
+1. Make sure that you have Docker installed on your system.
+
+```bash
+   docker -v
+```
+
+2. Clone the Truck Signs Repo.
+
+```bash
+   git clone https://github.com/NicoMeyerDev/Truck-Signs-API-v2
+   cd truck-signs-api-main
+```
+
+3. Build the image using `docker build`.
+
+```bash
+   docker build -t "truck-signs-api" .
+```
+
+### Docker run
+
+1. Build the docker image (see above).
+
+2. Copy and update the example.env file.
+
+```bash
+   cp example.env .env
+   nano .env
+```
+
+   > [!Tip]
+   > By default, in this section, the database has the hostname **db** and runs on port **5432**, so you can add these values to your **.env** like here:
+   >
+   > ```bash
+   > DB_HOST=db
+   > DB_PORT=5432
+   > ```
+
+3. This application consists of two services: the backend and the database. Because the database needs to be reachable by the backend, we need to create a network and add both containers to it.
+
+```bash
+   docker network create truck-signs-api-net
+```
+
+4. You will also need a volume to store and persist the database data.
+
+```bash
+   docker volume create truck-signs-api-vol
+```
+
+5. Start the database container.
+
+```bash
+   docker run \
+     --network=truck-signs-api-net \
+     --hostname=db \
+     -v "truck-signs-api-vol:/var/lib/postgresql" \
+     -e 'POSTGRES_USER=trucksigns-user' \
+     -e 'POSTGRES_PASSWORD=example-password' \
+     -e 'POSTGRES_DB=truck-signs' \
+     --restart unless-stopped \
+     -d \
+     postgres:18.6-alpine
+```
+
+   > [!Important]
+   > Make sure the database configuration (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) matches the values you specified in your `.env` file.
+
+6. Build the backend image (see above).
+
+7. Run the backend container.
+
+```bash
+   docker run \
+     --network=truck-signs-api-net \
+     --name=tsa_backend \
+     -v "./src/staticfiles:/app/src/staticfiles" \
+     -v "./src/media:/app/src/media" \
+     --env-file .env \
+     --restart unless-stopped \
+     -p '8020:8000' \
+     -d truck-signs-api
+```
+
+8. The backend container's port is mapped to 8020, so the application will be reachable at `http://localhost:8020` on the host machine (the admin UI will be at `http://localhost:8020/admin`).
+
+### Docker Compose
+
+Before using Docker Compose, you need to build the image manually, as the backend service uses this locally built image.
+
+1. Build the Docker image (see above).
+
+2. Ensure you have Docker Compose installed on your system.
+
+```bash
+   docker compose version
+```
+
+3. Start the containers using Docker Compose.
+
+```bash
+   docker compose up -d
+```
+
+4. By default, the backend container's port is mapped to 8020, so the application will be reachable at `http://localhost:8020` on the host machine (the admin UI will be at `http://localhost:8020/admin`).
 ### Settings
 
 The `settings.py` folder inside the `src/tsa_app` folder contains the different settings configuration for the application.
